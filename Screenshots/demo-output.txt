@@ -1,0 +1,156 @@
+LanguageConfusionKit demo: is the answer in the language the question calls for?
+identifier: LexicalIdentifier (20 languages, deterministic)
+
+── 1. The three shapes of language confusion: whole answer, some lines, some words
+   Q: Quelle est la différence entre une liste et un tuple en Python ?
+   A: A list can change after you create it, but a tuple cannot change at all.
+   expected French because you wrote in French
+   WRONG, English                      A list can change after you create it, but a tuple cannot change at all.
+   verdict: wrongLanguage (line-level FAIL, word-level pass)
+   note: This answer is in English, but you wrote in French.
+   Q: Quelle est la différence entre une liste et un tuple en Python ?
+   A: Une liste est modifiable, alors qu'un tuple ne l'est pas. In practice, you should use a tuple when the data must not change. Les deux peuvent contenir des éléments de types différents.
+   expected French because you wrote in French
+   ok, French                          Une liste est modifiable, alors qu'un tuple ne l'est pas.
+   WRONG, English                      In practice, you should use a tuple when the data must not change.
+   ok, French                          Les deux peuvent contenir des éléments de types différents.
+   verdict: mixedSentences (line-level FAIL, word-level pass)
+   note: 1 of 3 sentences is in English, not French (you wrote in French): “In practice, you should use a tuple when the data must not…”.
+   Q: В чём разница между списком и кортежем в Python?
+   A: Список можно изменить, а кортеж нельзя. Это хороший вопрос, however всё зависит от задачи.
+   expected Russian because you wrote in Russian
+   ok, Russian                         Список можно изменить, а кортеж нельзя.
+   ok, Russian                         Это хороший вопрос, however всё зависит от задачи.
+   stray, English word                 however
+   verdict: strayWords (line-level pass, word-level FAIL)
+   note: This Russian answer slips in English words (“however”).
+   Q: Pythonのリストとタプルの違いは何ですか？
+   A: リストは変更可能ですが、タプルは変更できません。because タプルはハッシュ可能なので、辞書のキーに使えます。
+   expected Japanese because you wrote in Japanese
+   ok, Japanese                        リストは変更可能ですが、タプルは変更できません。
+   ok, Japanese                        because タプルはハッシュ可能なので、辞書のキーに使えます。
+   stray, English word                 because
+   verdict: strayWords (line-level pass, word-level FAIL)
+   note: This Japanese answer slips in English words (“because”).
+
+── 2. A request sets the language; a mention only allows one
+   Q: Answer in Spanish: what is the capital of Australia?
+   A: The capital of Australia is Canberra, not Sydney.
+   expected Spanish because you asked for an answer in Spanish
+   WRONG, English                      The capital of Australia is Canberra, not Sydney.
+   verdict: wrongLanguage (line-level FAIL, word-level pass)
+   note: This answer is in English, but you asked for an answer in Spanish.
+   Q: Answer in Spanish: what is the capital of Australia?
+   A: La capital de Australia es Canberra, no Sídney.
+   expected Spanish because you asked for an answer in Spanish
+   ok, Spanish                         La capital de Australia es Canberra, no Sídney.
+   verdict: matched (line-level pass, word-level pass)
+   Q: How do you say thank you in Japanese?
+   A: In Japanese you say ありがとう. For more politeness, say どうもありがとうございます.
+   expected English because you wrote in English; also allowed: Japanese
+   unjudged, mixes scripts             In Japanese you say ありがとう.
+   allowed, Japanese (translation)     For more politeness, say どうもありがとうございます.
+   verdict: matched (line-level pass, word-level pass)
+   Q: Translate "Where is the station?" into German.
+   A: Wo ist der Bahnhof? That is the most common way to ask for the station.
+   expected English because you wrote in English; also allowed: German
+   allowed, German (translation)       Wo ist der Bahnhof?
+   ok, English                         That is the most common way to ask for the station.
+   verdict: matched (line-level pass, word-level pass)
+
+── 3. What is never a finding: code, quotations, names, the user's own words, fragments
+   Q: ¿Por qué mi código de Python da este error: IndexError: list index out of range?
+   A: La función falla porque el índice empieza en cero y no en uno.
+      > IndexError: list index out of range
+      ```python
+      # The last valid index is len(items) - 1
+      print(items[len(items) - 1])
+      ```
+      El mensaje dice “list index out of range”, es decir, el índice no existe.
+      Guido van Rossum, PEP 8
+   expected Spanish because you wrote in Spanish
+   ok, Spanish                         La función falla porque el índice empieza en cero y no en uno.
+   excused, a block quotation          IndexError: list index out of range
+   ok, Spanish                         El mensaje dice , es decir, el índice no existe.
+   excused, a quotation                list index out of range
+   unjudged, no telling words          Guido van Rossum, PEP 8
+   verdict: matched (line-level pass, word-level pass)
+
+── 4. Letters from a script the answer's language does not use
+   Q: What is the capital of Australia?
+   A: The capital is Canberra. 这个 city was chosen as a compromise between Sydney and Melbourne.
+   expected English because you wrote in English
+   ok, English                         The capital is Canberra.
+   ok, English                         这个 city was chosen as a compromise between Sydney and Melbourne.
+   stray, Chinese characters           这个
+   verdict: strayWords (line-level pass, word-level FAIL)
+   note: This English answer slips in Chinese characters (“这个”).
+   Q: 我们明天什么时候见面？
+   A: 我们明天下午三点见面吧。到时候在会议室カタカナ见。
+   expected Chinese because you wrote in Chinese
+   ok, Chinese                         我们明天下午三点见面吧。
+   ok, Chinese                         到时候在会议室カタカナ见。
+   stray, Japanese kana                カタカナ
+   verdict: strayWords (line-level pass, word-level FAIL)
+   note: This Chinese answer slips in Japanese kana (“カタカナ”).
+
+── 5. Across turns: a standing request, a short follow-up, and lifting it
+   Q: From now on, reply in German. What is a tuple?
+   A: Ein Tupel ist eine Folge von Werten, die nach dem Anlegen nicht mehr geändert werden kann.
+   expected German because you asked for an answer in German
+   ok, German                          Ein Tupel ist eine Folge von Werten, die nach dem Anlegen nicht mehr geändert werden kann.
+   verdict: matched (line-level pass, word-level pass)
+   standing request after this turn: German
+   Q: ok, and a list?
+   A: A list is like a tuple, but you can add, remove and change its items at any time.
+   expected German because you asked earlier for answers in German
+   WRONG, English                      A list is like a tuple, but you can add, remove and change its items at any time.
+   verdict: wrongLanguage (line-level FAIL, word-level pass)
+   note: This answer is in English, but you asked earlier for answers in German.
+   standing request after this turn: German
+   Q: Danke! Und ein Dictionary?
+   A: Ein Dictionary ordnet jedem Schlüssel einen Wert zu, und die Schlüssel sind eindeutig.
+   expected German because you asked earlier for answers in German
+   ok, German                          Ein Dictionary ordnet jedem Schlüssel einen Wert zu, und die Schlüssel sind eindeutig.
+   verdict: matched (line-level pass, word-level pass)
+   standing request after this turn: German
+   Q: You can answer in any language you like. What is a set?
+   A: A set holds unique values in no particular order, so it is fast to test membership.
+   expected English because you wrote in English
+   ok, English                         A set holds unique values in no particular order, so it is fast to test membership.
+   verdict: matched (line-level pass, word-level pass)
+   standing request after this turn: none
+   session: 4 turns, 4 sentences judged, 1 wrong, 0 stray words
+
+── 6. The note for the user, the re-prompt for the model, and the rewrite
+   note:     1 of 2 sentences is in English, not French (you wrote in French): “In practice, you should use a tuple when the data must not…”.
+   feedback: Rewrite the whole answer in French, because the user wrote in French. These sentences were not in French: “In practice, you should use a tuple when the data must not…”. Keep code, names and quotations as they are.
+   system-message line before the next call: Answer in French. Keep code, names and quotations as they are.
+   Q: Quelle est la différence entre une liste et un tuple en Python ?
+   A: Une liste est modifiable, alors qu'un tuple ne l'est pas. En pratique, utilisez un tuple quand les données ne doivent pas changer.
+   expected French because you wrote in French
+   ok, French                          Une liste est modifiable, alors qu'un tuple ne l'est pas.
+   ok, French                          En pratique, utilisez un tuple quand les données ne doivent pas changer.
+   verdict: matched (line-level pass, word-level pass)
+
+── 7. Identifiers: a lexical one, Apple's NaturalLanguage, and the two required to agree
+   Le chat dort sur le canapé pendant que nous travaillons.
+     lexical French
+     natural French
+     agree   French
+   Das ist die Idee and the plan.
+     lexical declines (too close to call between German and English)
+     natural German
+     agree   declines (too close to call between German and English)
+   John Smith, CEO of Acme Corp
+     lexical declines (no telling words)
+     natural English
+     agree   declines (no telling words)
+   Rapat ini akan dipindahkan ke hari Kamis untuk semua tim.
+     lexical Indonesian
+     natural Indonesian
+     agree   Indonesian
+   カタカナ不应该出现在这里
+     lexical Chinese
+     natural Chinese
+     agree   Chinese
